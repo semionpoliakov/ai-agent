@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
@@ -21,10 +20,7 @@ import { postQuery } from "../lib/api";
 import { useDebounce } from "../lib/use-debounce";
 import type { AgentMessage, QueryResponse } from "../lib/types";
 import { Download, Eye, Send } from "lucide-react";
-
-const DataTable = dynamic(() => import("../components/data-table").then((mod) => mod.DataTable), {
-  loading: () => <Skeleton className="h-40 w-full" />,
-});
+import { DataTable } from "../components/data-table";
 
 function downloadCsv(rows: Array<Record<string, string | number | null>>, question: string) {
   if (!rows.length) return;
