@@ -32,6 +32,22 @@ if settings.cors_allowed_origin:
     )
 
 
+@app.on_event("startup")
+async def bootstrap_clickhouse() -> None:
+    clickhouse = get_clickhouse_client()
+    try:
+        summary = await clickhouse.ensure_table_seeded()
+        logging.info(
+            "clickhouse_bootstrap table=%s created=%s seeded=%s row_count=%s",
+            summary["table"],
+            summary["created"],
+            summary["seeded"],
+            summary["row_count"],
+        )
+    except Exception:  # noqa: BLE001
+        logging.exception("Failed to bootstrap ClickHouse dataset")
+
+
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
     return JSONResponse(

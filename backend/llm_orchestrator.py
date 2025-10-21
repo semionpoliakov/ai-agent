@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import json
 import logging
 import re
 import time
-from hashlib import sha256
 from typing import Any
 
-from app.core.cache import fingerprint as make_fingerprint
-from app.core.cache import read_cache, write_cache
 from app.core.config import get_settings
 from app.core.context import get_memory
+from app.prompts.marketing_prompts import build_sql_prompt, build_summary_prompt
+from app.services.cache_utils import get_cached_response, store_response
 from app.services.clickhouse import get_clickhouse_client
 from app.services.llm_factory import get_llm_client
 from app.services.sql_validator import allow_only_select
+from app.utils.llm_cleaner import clean_sql_output
 
 logger = logging.getLogger(__name__)
 
@@ -21,114 +20,13 @@ SETTINGS = get_settings()
 MEMORY = get_memory()
 
 
-def _question_key(question: str) -> str:
-    digest = sha256(question.strip().lower().encode("utf-8")).hexdigest()
-    return f"cache:question:{digest}"
-
-
-async def _lookup_cache(question: str) -> dict[str, Any] | None:
-    question_key = _question_key(question)
-    mapping = await read_cache(question_key)
-    if not mapping:
-        return None
-    fingerprint_key = mapping.get("fingerprint")
-    if not fingerprint_key:
-        return None
-    return await read_cache(fingerprint_key)
-
-
-async def _store_cache(question: str, fingerprint_key: str, payload: dict[str, Any]) -> None:
-    question_key = _question_key(question)
-    await write_cache(fingerprint_key, payload)
-    await write_cache(question_key, {"fingerprint": fingerprint_key})
-
-
-def _format_history(history: list[str]) -> str:
-    if not history:
-        return "No previous user questions."
-    numbered = [f"{idx + 1}. {message}" for idx, message in enumerate(history[-SETTINGS.max_history_messages :])]
-    return "\n".join(numbered)
-
-
-def _build_sql_prompt(question: str, history: list[str]) -> str:
-    return f"""You are an expert marketing analytics engineer working with ClickHouse.
-Use the available table `ad_performance` with columns:
-- date Date
-- source String
-- campaign_id UInt32
-- campaign_name String
-- country String
-- impressions UInt32
-- clicks UInt32
-- spend Float32
-- conversions UInt32
-- revenue Float32
-
-Derived metrics available for reporting:
-- ctr = clicks / impressions
-- cpc = spend / clicks
-- roas = revenue / spend
-
-User conversation history (latest first):
-{_format_history(history)}
-
-Task:
-Return a single ClickHouse SQL SELECT statement that answers the new question.
-- Always aggregate data appropriately.
-- Include sample usage of quantiles(0.25, 0.5, 0.75)(spend) and uniqExact(campaign_id) when summarising spend distribution or unique campaigns.
-- Never modify data (read-only).
-- Provide well-aliased columns using snake_case.
-- Limit rows to 100 by default.
-- Use Date truncation when fetching multi-day ranges.
-
-Return ONLY the SQL string with no explanation.
-
-New question: {question}"""
-
-
-def _build_summary_prompt(question: str, sql: str, rows: list[dict[str, Any]]) -> str:
-    dataset = json.dumps(rows, ensure_ascii=False)
-    return f"""You are a marketing analyst.
-You previously generated the following SQL query:
-{sql}
-
-It produced this JSON result set:
-{dataset}
-
-Write a concise answer for the business stakeholder.
-- Explain the key findings in plain English.
-- Highlight metrics such as spend, clicks, ctr, roas.
-- Mention any notable quantiles or campaign counts if present.
-- Keep the tone factual and actionable.
-
-User question that triggered this analysis: {question}"""
-
-
-def _clean_sql_output(raw: str) -> str:
-    """Remove reasoning noise and extract clean SQL."""
-    sql_raw = raw.strip()
-
-    # Remove reasoning tags like <think>...</think>
-    sql_raw = re.sub(r"<think>.*?</think>", "", sql_raw, flags=re.DOTALL).strip()
-
-    # Extract SQL from markdown blocks
-    if "```sql" in sql_raw:
-        match = re.search(r"```sql\s*(.*?)```", sql_raw, flags=re.DOTALL)
-        if match:
-            sql_raw = match.group(1).strip()
-
-    # Extract only SELECT statement if present
-    if not sql_raw.lower().startswith("select"):
-        match = re.search(r"(?i)(select\s+.+)", sql_raw, re.DOTALL)
-        if match:
-            sql_raw = match.group(1).strip()
-
-    return sql_raw
+def _strip_think_blocks(text: str) -> str:
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
 
 
 async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
     start_time = time.perf_counter()
-    cached = await _lookup_cache(question)
+    cached = await get_cached_response(question)
     if cached:
         logger.info("cache_hit question=%s", question[:80])
         if user_id:
@@ -137,13 +35,16 @@ async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
         return cached
 
     history = MEMORY.get_recent(user_id) if user_id else []
-    memory_payload = history + [f"Q: {question}"]
+    recent_history = history[-SETTINGS.max_history_messages :]
+    memory_payload = recent_history + [f"Q: {question}"]
 
     llm = get_llm_client()
-    sql_prompt = _build_sql_prompt(question, memory_payload)
+    sql_prompt = build_sql_prompt(question, memory_payload)
     sql_raw = await llm.generate_text(sql_prompt)
+    sql_raw = _strip_think_blocks(sql_raw)
 
-    sql_clean = _clean_sql_output(sql_raw)
+    sql_clean = clean_sql_output(sql_raw)
+    logger.debug("Cleaned SQL: %s", sql_clean)
     if not sql_clean:
         logger.error("Empty SQL output after cleaning for question=%s", question)
         raise ValueError("No valid SQL generated by LLM")
@@ -153,8 +54,9 @@ async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
     clickhouse = get_clickhouse_client()
     rows = await clickhouse.execute(sql)
 
-    summary_prompt = _build_summary_prompt(question, sql, rows)
-    summary = await llm.generate_text(summary_prompt)
+    summary_prompt = build_summary_prompt(question, sql, rows)
+    summary_raw = await llm.generate_text(summary_prompt)
+    summary = _strip_think_blocks(summary_raw)
 
     if user_id:
         MEMORY.add(user_id, f"Q: {question}")
@@ -166,9 +68,7 @@ async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
         "summary": summary,
     }
 
-    fp = make_fingerprint(question, sql)
-    fingerprint_key = f"cache:fingerprint:{fp}"
-    await _store_cache(question, fingerprint_key, payload)
+    await store_response(question, sql, payload)
 
     elapsed = time.perf_counter() - start_time
     logger.info("query_latency_seconds=%.3f", elapsed)
