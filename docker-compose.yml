@@ -47,13 +47,13 @@ services:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
     volumes:
       - ./backend/app:/app/app
       - ./backend/llm_orchestrator.py:/app/llm_orchestrator.py
-      - ./db:/app/db
     ports:
       - "8000:8000"
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 volumes:
   clickhouse-data:

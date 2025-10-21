@@ -14,7 +14,7 @@ class GeminiClient:
         self._model = settings.gemini_model
         self._api_key = settings.gemini_api_key.get_secret_value()
         self._client = httpx.AsyncClient(
-            base_url="https://generativelanguage.googleapis.com/v1beta",
+            base_url="https://generativelanguage.googleapis.com/v1",
             timeout=httpx.Timeout(30.0, read=60.0),
         )
         self._lock = asyncio.Lock()

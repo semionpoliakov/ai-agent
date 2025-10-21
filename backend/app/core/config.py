@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     max_history_messages: PositiveInt = Field(3, alias="MAX_HISTORY_MESSAGES")
     cache_ttl_seconds: PositiveInt = Field(3600, alias="CACHE_TTL_SECONDS")
     rate_limit_per_minute: PositiveInt = Field(30, alias="RATE_LIMIT_PER_MINUTE")
+    cors_allowed_origin: str | None = Field(None, alias="CORS_ALLOWED_ORIGIN")
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

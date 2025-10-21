@@ -6,12 +6,13 @@
   color-scheme: light;
 }
 
-body {
-  background-color: theme("colors.background");
-  color: theme("colors.foreground");
-  font-feature-settings:
-    "liga" 1,
-    "kern" 1;
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "liga" 1,
+      "kern" 1;
+  }
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -23,6 +24,6 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: theme("colors.muted.foreground");
-  border-radius: theme("borderRadius.sm");
+  background-color: hsl(215.4 16.3% 46.9%);
+  border-radius: 8px;
 }
