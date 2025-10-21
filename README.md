@@ -103,6 +103,7 @@ pytest
 
 ## TODO / Future Enhancements
 - Observability stack (Prometheus, Grafana, OpenTelemetry).
+- Add CORS support across services.
 - CI/CD pipeline (GitHub Actions) for automated testing and deploys.
 - Horizontal scaling via Kubernetes + Helm charts.
 - Multi-model LLM orchestration for SQL + narrative ensembles.

@@ -5,24 +5,27 @@ import json
 from hashlib import sha256
 from typing import Any
 
-import aioredis
+from redis.asyncio import Redis
 
 from .config import get_settings
 
 _settings = get_settings()
-_redis: aioredis.Redis | None = None
+_redis: Redis | None = None
 _lock = asyncio.Lock()
 
 
-async def get_redis() -> aioredis.Redis:
+async def get_redis() -> Redis:
     global _redis
     if _redis is not None:
         return _redis
     async with _lock:
-        if _redis is not None:
-            return _redis
-        _redis = await aioredis.from_url(_settings.redis_url, encoding="utf-8", decode_responses=True)
-        return _redis
+        if _redis is None:
+            _redis = Redis.from_url(
+                str(_settings.redis_url),
+                encoding="utf-8",
+                decode_responses=True,
+            )
+    return _redis
 
 
 def fingerprint(question: str, sql: str) -> str:

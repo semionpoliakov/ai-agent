@@ -7,7 +7,8 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from ...llm_orchestrator import run_agent
+from llm_orchestrator import run_agent
+
 from ..core.config import get_settings
 from ..models.schemas import QueryRequest, QueryResponse
 

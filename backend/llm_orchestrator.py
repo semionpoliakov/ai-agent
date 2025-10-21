@@ -6,13 +6,13 @@ import time
 from hashlib import sha256
 from typing import Any
 
-from backend.app.core.cache import fingerprint as make_fingerprint
-from backend.app.core.cache import read_cache, write_cache
-from backend.app.core.config import get_settings
-from backend.app.core.context import get_memory
-from backend.app.services.clickhouse import get_clickhouse_client
-from backend.app.services.llm_client import get_gemini_client
-from backend.app.services.sql_validator import allow_only_select
+from app.core.cache import fingerprint as make_fingerprint
+from app.core.cache import read_cache, write_cache
+from app.core.config import get_settings
+from app.core.context import get_memory
+from app.services.clickhouse import get_clickhouse_client
+from app.services.llm_client import get_gemini_client
+from app.services.sql_validator import allow_only_select
 
 logger = logging.getLogger(__name__)
 

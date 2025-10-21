@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -21,15 +20,6 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(title=settings.app_name)
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
-
-if settings.frontend_cors_origin:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(settings.frontend_cors_origin)],
-        allow_credentials=True,
-        allow_methods=["POST", "GET", "OPTIONS"],
-        allow_headers=["*"],
-    )
 
 
 @app.exception_handler(RateLimitExceeded)
