@@ -48,6 +48,9 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+      LLM_PROVIDER: ${LLM_PROVIDER:-groq}
+      LLM_MODEL: ${LLM_MODEL:-qwen/qwen3-32b}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
     volumes:
       - ./backend/app:/app/app
       - ./backend/llm_orchestrator.py:/app/llm_orchestrator.py

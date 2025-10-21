@@ -10,3 +10,4 @@ clickhouse-driver==0.2.9
 faker==37.11.0
 pandas==2.3.3
 numpy==2.3.4
+groq>=0.6.0

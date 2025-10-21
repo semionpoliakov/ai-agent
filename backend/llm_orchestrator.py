@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from hashlib import sha256
 from typing import Any
@@ -11,7 +12,7 @@ from app.core.cache import read_cache, write_cache
 from app.core.config import get_settings
 from app.core.context import get_memory
 from app.services.clickhouse import get_clickhouse_client
-from app.services.llm_client import get_gemini_client
+from app.services.llm_factory import get_llm_client
 from app.services.sql_validator import allow_only_select
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,79 @@ def _format_history(history: list[str]) -> str:
 
 
 def _build_sql_prompt(question: str, history: list[str]) -> str:
-    return f"""You are an expert marketing analytics engineer working with ClickHouse.\nUse the available table `ad_performance` with columns:\n- date Date\n- source String\n- campaign_id UInt32\n- campaign_name String\n- country String\n- impressions UInt32\n- clicks UInt32\n- spend Float32\n- conversions UInt32\n- revenue Float32\n\nDerived metrics available for reporting:\n- ctr = clicks / impressions\n- cpc = spend / clicks\n- roas = revenue / spend\n\nUser conversation history (latest first):\n{_format_history(history)}\n\nTask:\nReturn a single ClickHouse SQL SELECT statement that answers the new question.\n- Always aggregate data appropriately.\n- Include sample usage of quantiles(0.25, 0.5, 0.75)(spend) and uniqExact(campaign_id) when summarising spend distribution or unique campaigns.\n- Never modify data (read-only).\n- Provide well-aliased columns using snake_case.\n- Limit rows to 100 by default.\n- Use Date truncation when fetching multi-day ranges.\n\nReturn ONLY the SQL string with no explanation.\n\nNew question: {question}"""
+    return f"""You are an expert marketing analytics engineer working with ClickHouse.
+Use the available table `ad_performance` with columns:
+- date Date
+- source String
+- campaign_id UInt32
+- campaign_name String
+- country String
+- impressions UInt32
+- clicks UInt32
+- spend Float32
+- conversions UInt32
+- revenue Float32
+
+Derived metrics available for reporting:
+- ctr = clicks / impressions
+- cpc = spend / clicks
+- roas = revenue / spend
+
+User conversation history (latest first):
+{_format_history(history)}
+
+Task:
+Return a single ClickHouse SQL SELECT statement that answers the new question.
+- Always aggregate data appropriately.
+- Include sample usage of quantiles(0.25, 0.5, 0.75)(spend) and uniqExact(campaign_id) when summarising spend distribution or unique campaigns.
+- Never modify data (read-only).
+- Provide well-aliased columns using snake_case.
+- Limit rows to 100 by default.
+- Use Date truncation when fetching multi-day ranges.
+
+Return ONLY the SQL string with no explanation.
+
+New question: {question}"""
 
 
 def _build_summary_prompt(question: str, sql: str, rows: list[dict[str, Any]]) -> str:
     dataset = json.dumps(rows, ensure_ascii=False)
-    return f"""You are a marketing analyst.\nYou previously generated the following SQL query:\n{sql}\n\nIt produced this JSON result set:\n{dataset}\n\nWrite a concise answer for the business stakeholder.\n- Explain the key findings in plain English.\n- Highlight metrics such as spend, clicks, ctr, roas.\n- Mention any notable quantiles or campaign counts if present.\n- Keep the tone factual and actionable.\n\nUser question that triggered this analysis: {question}"""
+    return f"""You are a marketing analyst.
+You previously generated the following SQL query:
+{sql}
+
+It produced this JSON result set:
+{dataset}
+
+Write a concise answer for the business stakeholder.
+- Explain the key findings in plain English.
+- Highlight metrics such as spend, clicks, ctr, roas.
+- Mention any notable quantiles or campaign counts if present.
+- Keep the tone factual and actionable.
+
+User question that triggered this analysis: {question}"""
+
+
+def _clean_sql_output(raw: str) -> str:
+    """Remove reasoning noise and extract clean SQL."""
+    sql_raw = raw.strip()
+
+    # Remove reasoning tags like <think>...</think>
+    sql_raw = re.sub(r"<think>.*?</think>", "", sql_raw, flags=re.DOTALL).strip()
+
+    # Extract SQL from markdown blocks
+    if "```sql" in sql_raw:
+        match = re.search(r"```sql\s*(.*?)```", sql_raw, flags=re.DOTALL)
+        if match:
+            sql_raw = match.group(1).strip()
+
+    # Extract only SELECT statement if present
+    if not sql_raw.lower().startswith("select"):
+        match = re.search(r"(?i)(select\s+.+)", sql_raw, re.DOTALL)
+        if match:
+            sql_raw = match.group(1).strip()
+
+    return sql_raw
 
 
 async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
@@ -71,17 +139,22 @@ async def run_agent(question: str, user_id: str | None) -> dict[str, Any]:
     history = MEMORY.get_recent(user_id) if user_id else []
     memory_payload = history + [f"Q: {question}"]
 
-    gemini = get_gemini_client()
+    llm = get_llm_client()
     sql_prompt = _build_sql_prompt(question, memory_payload)
-    sql_raw = await gemini.generate_text(sql_prompt)
+    sql_raw = await llm.generate_text(sql_prompt)
 
-    sql = allow_only_select(sql_raw)
+    sql_clean = _clean_sql_output(sql_raw)
+    if not sql_clean:
+        logger.error("Empty SQL output after cleaning for question=%s", question)
+        raise ValueError("No valid SQL generated by LLM")
+
+    sql = allow_only_select(sql_clean)
 
     clickhouse = get_clickhouse_client()
     rows = await clickhouse.execute(sql)
 
     summary_prompt = _build_summary_prompt(question, sql, rows)
-    summary = await gemini.generate_text(summary_prompt)
+    summary = await llm.generate_text(summary_prompt)
 
     if user_id:
         MEMORY.add(user_id, f"Q: {question}")
