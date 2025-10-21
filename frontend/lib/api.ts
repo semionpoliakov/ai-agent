@@ -2,7 +2,10 @@ import type { QueryPayload, QueryResponse } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-export async function postQuery(payload: QueryPayload, signal?: AbortSignal): Promise<QueryResponse> {
+export async function postQuery(
+  payload: QueryPayload,
+  signal?: AbortSignal,
+): Promise<QueryResponse> {
   const res = await fetch(`${API_BASE_URL}/api/v1/query`, {
     method: "POST",
     headers: {

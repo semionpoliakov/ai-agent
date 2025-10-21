@@ -43,7 +43,7 @@ class ClickHouseClient:
         loop = asyncio.get_running_loop()
         data, columns = await loop.run_in_executor(None, self._run_query, sql)
         column_names = [col[0] for col in columns]
-        return [dict(zip(column_names, row)) for row in data]
+        return [dict(zip(column_names, row, strict=False)) for row in data]
 
     def _run_query(self, sql: str) -> tuple[list[Any], list[Any]]:
         return self._client.execute(sql, with_column_types=True)

@@ -7,9 +7,9 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from ...llm_orchestrator import run_agent
 from ..core.config import get_settings
 from ..models.schemas import QueryRequest, QueryResponse
-from ...llm_orchestrator import run_agent
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,8 @@ async def query_endpoint(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         logger.exception("Failed to process query")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process question") from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process question"
+        ) from exc
 
     return QueryResponse(**result)

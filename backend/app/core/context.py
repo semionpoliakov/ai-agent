@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Deque
 
 from .config import get_settings
 
@@ -10,7 +9,7 @@ _settings = get_settings()
 
 class ConversationMemory:
     def __init__(self) -> None:
-        self._store: dict[str, Deque[str]] = {}
+        self._store: dict[str, deque[str]] = {}
 
     def add(self, user_id: str, message: str) -> None:
         history = self._store.setdefault(user_id, deque(maxlen=_settings.max_history_messages))

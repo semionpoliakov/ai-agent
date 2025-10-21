@@ -7,9 +7,11 @@
 }
 
 body {
-  background-color: theme('colors.background');
-  color: theme('colors.foreground');
-  font-feature-settings: 'liga' 1, 'kern' 1;
+  background-color: theme("colors.background");
+  color: theme("colors.foreground");
+  font-feature-settings:
+    "liga" 1,
+    "kern" 1;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -21,6 +23,6 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: theme('colors.muted.foreground');
-  border-radius: theme('borderRadius.sm');
+  background-color: theme("colors.muted.foreground");
+  border-radius: theme("borderRadius.sm");
 }

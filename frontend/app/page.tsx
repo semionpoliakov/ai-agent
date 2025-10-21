@@ -9,7 +9,13 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 import { rateLimiter } from "../lib/rate-limit";
 import { postQuery } from "../lib/api";
 import { useDebounce } from "../lib/use-debounce";
@@ -114,10 +120,13 @@ export default function HomePage() {
       <section className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">Marketing Analytics Copilot</h1>
         <p className="text-sm text-muted-foreground">
-          Ask natural-language questions about your Facebook Ads and Google Ads performance. The agent will generate
-          ClickHouse SQL, execute the query, and summarise the results for you.
+          Ask natural-language questions about your Facebook Ads and Google Ads performance. The
+          agent will generate ClickHouse SQL, execute the query, and summarise the results for you.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-xl border border-muted-foreground/20 bg-card p-4 shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3 rounded-xl border border-muted-foreground/20 bg-card p-4 shadow-sm"
+        >
           <div className="flex flex-col gap-2">
             <label htmlFor="question" className="text-sm font-medium text-muted-foreground">
               Question
@@ -133,16 +142,19 @@ export default function HomePage() {
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              Cached answers appear instantly. Remaining client-side requests: {rateLimiter.remaining()}
+              Cached answers appear instantly. Remaining client-side requests:{" "}
+              {rateLimiter.remaining()}
             </span>
-            <Button type="submit" disabled={!isQuestionValid || mutation.isPending} className="inline-flex items-center gap-2">
+            <Button
+              type="submit"
+              disabled={!isQuestionValid || mutation.isPending}
+              className="inline-flex items-center gap-2"
+            >
               <Send size={16} /> Ask agent
             </Button>
           </div>
         </form>
-        {error ? (
-          <p className="text-sm text-destructive">{error}</p>
-        ) : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </section>
 
       {mutation.isPending ? (
@@ -167,7 +179,10 @@ export default function HomePage() {
             <CardContent>
               <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                 <li>Show spend, clicks, CTR and ROAS by ad source for the last 7 days.</li>
-                <li>What are the spend quantiles and unique campaign count in the US for the past quarter?</li>
+                <li>
+                  What are the spend quantiles and unique campaign count in the US for the past
+                  quarter?
+                </li>
                 <li>Highlight campaigns with the highest ROAS week over week.</li>
               </ul>
             </CardContent>
@@ -179,7 +194,11 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle className="text-base">{message.question}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Answered {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                Answered{" "}
+                {new Date(message.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </CardHeader>
             <CardContent>
@@ -197,7 +216,7 @@ export default function HomePage() {
                       Review the ClickHouse query before running it elsewhere.
                     </DialogDescription>
                     <pre className="scrollbar-thin max-h-72 overflow-auto rounded-md bg-muted/40 p-4 text-xs">
-{message.response.sql}
+                      {message.response.sql}
                     </pre>
                   </DialogContent>
                 </Dialog>

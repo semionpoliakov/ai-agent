@@ -10,7 +10,10 @@ export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableEle
   );
 }
 
-export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+export function TableHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLTableSectionElement>) {
   return <thead className={clsx("bg-secondary/60 text-xs uppercase", className)} {...props} />;
 }
 
@@ -24,10 +27,7 @@ export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTable
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th
-      className={clsx("px-4 py-3 font-medium text-muted-foreground", className)}
-      {...props}
-    />
+    <th className={clsx("px-4 py-3 font-medium text-muted-foreground", className)} {...props} />
   );
 }
 

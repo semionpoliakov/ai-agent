@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +8,8 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from .api.routes import limiter, router as query_router
+from .api.routes import limiter
+from .api.routes import router as query_router
 from .core.cache import get_redis
 from .core.config import get_settings
 from .models.schemas import HealthResponse

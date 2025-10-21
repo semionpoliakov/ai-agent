@@ -3,8 +3,8 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from pydantic import AnyHttpUrl, BaseSettings, Field, PositiveInt, SecretStr, validator
 from dotenv import load_dotenv
+from pydantic import AnyHttpUrl, BaseSettings, Field, PositiveInt, SecretStr, validator
 
 load_dotenv()
 

@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 120
+skip-string-normalization = false
+include = "(app|llm_orchestrator)"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ruff.lint]
+extend-select = ["I"]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+    "ASYNC",
+]
+ignore = ["B008", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/main.py" = ["B008"]

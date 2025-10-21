@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import asyncio
+import json
 from hashlib import sha256
 from typing import Any
 
@@ -27,7 +27,7 @@ async def get_redis() -> aioredis.Redis:
 
 def fingerprint(question: str, sql: str) -> str:
     normalized_sql = " ".join(sql.strip().split())
-    payload = f"{question}\n{normalized_sql}".encode("utf-8")
+    payload = f"{question}\n{normalized_sql}".encode()
     return sha256(payload).hexdigest()
 
 
