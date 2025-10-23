@@ -13,7 +13,6 @@ from ...infra.config import Settings, get_settings
 from ...infra.sql.normalizer import normalize_sql_for_clickhouse
 from ...infra.llm.base import LLMClientProtocol
 from ...infra.llm.factory import ProviderNotConfiguredError, get_llm_client
-from .memory import ConversationMemory, get_memory
 from .prompt_builder import render_sql_prompt
 from .sql_builder import clean_sql_output
 from .summarizer import Summarizer
@@ -31,13 +30,11 @@ class QueryOrchestrator:
         llm_client: LLMClientProtocol | None = None,
         clickhouse: ClickHouseClient | None = None,
         cache: RedisCache | None = None,
-        memory: ConversationMemory | None = None,
     ) -> None:
         self._settings = settings or get_settings()
         self._llm = llm_client or get_llm_client(self._settings)
         self._clickhouse = clickhouse or get_clickhouse_client()
         self._cache = cache or get_cache()
-        self._memory = memory or get_memory()
         self._summarizer = Summarizer(self._llm)
 
     async def run(self, *, question: str, user_id: str | None) -> dict[str, Any]:
@@ -48,12 +45,10 @@ class QueryOrchestrator:
         start_time = time.perf_counter()
         cached = await self._try_read_cache(question)
         if cached:
-            self._record_memory(user_id, question, cached["summary"])
             logger.info("cache_hit question=%s", question[:80])
             return cached
 
-        history = self._memory.get_recent(user_id) if user_id else []
-        sql_prompt = render_sql_prompt(question, history + [f"Q: {question}"])
+        sql_prompt = render_sql_prompt(question, [f"Q: {question}"])
         sql_raw = await self._llm.generate_text(sql_prompt)
         sql_clean = clean_sql_output(sql_raw)
         if not sql_clean:
@@ -67,7 +62,6 @@ class QueryOrchestrator:
 
         payload = {"sql": sql, "data": rows, "summary": summary}
         await self._store_cache(question, sql, payload)
-        self._record_memory(user_id, question, summary)
 
         elapsed = time.perf_counter() - start_time
         logger.info("query_latency_seconds=%.3f", elapsed)
@@ -86,12 +80,6 @@ class QueryOrchestrator:
         fp_key = fingerprint_key(question, sql)
         await self._cache.write(fp_key, payload)
         await self._cache.write(question_key(question), {"fingerprint": fp_key})
-
-    def _record_memory(self, user_id: str | None, question: str, answer: str) -> None:
-        if not user_id:
-            return
-        self._memory.add(user_id, f"Q: {question}")
-        self._memory.add(user_id, f"A: {answer}")
 
 
 _ORCHESTRATOR: QueryOrchestrator | None = None

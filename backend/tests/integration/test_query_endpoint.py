@@ -6,7 +6,6 @@ import pytest
 from app.api import deps
 from app.app import create_app
 from app.domain.models import QueryRequest
-from app.domain.services.memory import ConversationMemory
 from app.domain.services.orchestrator import QueryOrchestrator
 from app.infra.cache.client import RedisCache
 from app.infra.config import Settings, get_settings
@@ -20,7 +19,7 @@ class StubLLM(LLMClientProtocol):
 
     async def generate_text(self, prompt: str, *, temperature: float | None = None) -> str:
         self._last_prompt = prompt
-        if "JSON result set" in prompt:
+        if "JSON result" in prompt:
             return "The results look great."
         return "SELECT source, sum(spend) AS total_spend FROM ad_performance LIMIT 10"
 
@@ -60,7 +59,6 @@ def configure_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("API_PREFIX", "/api/v1")
     monkeypatch.setenv("CACHE_TTL_SECONDS", "60")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100")
-    monkeypatch.setenv("MAX_HISTORY_MESSAGES", "3")
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
@@ -70,14 +68,12 @@ def test_query_endpoint_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
     stub_llm = StubLLM()
     stub_clickhouse = StubClickHouse()
     stub_cache = InMemoryCache(settings)
-    memory = ConversationMemory(settings)
 
     orchestrator = QueryOrchestrator(
         settings=settings,
         llm_client=stub_llm,
         clickhouse=stub_clickhouse,  # type: ignore[arg-type]
         cache=stub_cache,
-        memory=memory,
     )
 
     monkeypatch.setattr("app.app.get_clickhouse_client", lambda: stub_clickhouse)
