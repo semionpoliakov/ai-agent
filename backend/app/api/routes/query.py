@@ -24,7 +24,6 @@ async def query_endpoint(
     payload: QueryRequest = Body(...),
     orchestrator: QueryOrchestrator = Depends(get_orchestrator_dep),
 ) -> QueryResponse:
-    _ = request  # unused but kept for future request-scoped metadata
     try:
         result = await orchestrator.run(question=payload.question, user_id=payload.user_id)
     except ValueError:

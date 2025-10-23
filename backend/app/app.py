@@ -50,7 +50,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         clickhouse = get_clickhouse_client()
         try:
             await bootstrap_clickhouse(clickhouse)
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("Failed to bootstrap ClickHouse dataset")
 
     app.include_router(health_router)

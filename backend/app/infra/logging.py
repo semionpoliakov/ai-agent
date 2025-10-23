@@ -59,3 +59,10 @@ def bind_request_id() -> str:
 def clear_request_id() -> None:
     """Clear any request id bound to the current context."""
     _REQUEST_ID.set("-")
+
+def get_request_id() -> str | None:
+    """Return the current request id bound to the active context."""
+    value = _REQUEST_ID.get("-")
+    if value == "-":
+        return None
+    return value
