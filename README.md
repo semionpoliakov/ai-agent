@@ -35,10 +35,10 @@ FastAPI-powered backend and Next.js frontend that converts marketing questions i
 5. **Frontend (optional)**
    ```bash
    cd frontend
-   npm install
-   npm run dev
+   pnpm install
+   pnpm dev
    ```
-   Configure `NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local` to point at the backend.
+   Configure `NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local` to point at the backend (required for production/static builds). See [frontend/README.md](frontend/README.md) for the full UI guide.
 
 ## Developer Tooling
 
@@ -58,6 +58,18 @@ Install dependencies locally with:
 ```bash
 pip install -r backend/requirements.txt -r requirements-dev.txt
 ```
+
+## Frontend Overview
+
+The marketing copilot UI lives under [`frontend/`](frontend). Key points:
+
+- **App Router + React 19** with clear separation between server (`app/page.tsx`) and client components (`app/components/agent/*`).
+- **Shared primitives** live under `app/components/ui`, hooks under `app/lib/hooks`, and API access through `app/lib/api` with Zod validation.
+- **State management** uses React Query via `ReactQueryProvider` and the `useAgentConsole` hook for rate limiting, caching, and optimistic updates.
+- **Performance**: heavy widgets (data table) are lazy-loaded with `next/dynamic`, and a bundle analyzer (`pnpm analyze`) is available for profiling.
+- **Tooling**: ESLint flat config (`eslint.config.mjs`), Vitest (`vitest.config.ts`), Tailwind CSS (`tailwind.config.ts`), and strict TypeScript (`tsconfig.json`).
+
+Refer to [frontend/README.md](frontend/README.md) for scripts, environment configuration, and testing workflows.
 
 ## API Reference
 

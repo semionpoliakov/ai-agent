@@ -1,0 +1,2 @@
+export const CLIENT_RATE_LIMIT_WINDOW_MS = 15_000;
+export const CLIENT_RATE_LIMIT_MAX_REQUESTS = 3;

@@ -11,7 +11,13 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
           queries: {
             staleTime: 1000 * 60,
             gcTime: 1000 * 60 * 5,
-            retry: 1,
+            retry: 2,
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: true,
+          },
+          mutations: {
+            retry: 0,
           },
         },
       }),

@@ -1,13 +1,17 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { AgentDataCell, AgentDataRow } from "@/types/agent";
 
-export type DataTableProps = {
-  rows: Array<Record<string, string | number | null>>;
-};
+export interface DataTableProps {
+  rows: AgentDataRow[];
+}
 
-function formatCell(value: string | number | null): string {
+function formatCell(value: AgentDataCell): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => formatCell(item ?? null)).join(", ");
+  }
   if (value === null || value === undefined) {
     return "—";
   }
@@ -55,4 +59,7 @@ function InnerDataTable({ rows }: DataTableProps) {
   );
 }
 
+InnerDataTable.displayName = "DataTable";
+
 export const DataTable = memo(InnerDataTable);
+DataTable.displayName = "DataTable";

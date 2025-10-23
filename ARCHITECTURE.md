@@ -53,3 +53,12 @@ The backend is organised around a clean architecture split into API, Domain, and
 - `/health` (liveness) and `/ready` (readiness) endpoints for Kubernetes probes.
 - Rate limiting via SlowAPI (`infra/rate_limit.py`), configured by `RATE_LIMIT_PER_MINUTE`.
 - Configuration validated centrally in `infra/config.py`, preventing boot when secrets are missing.
+
+## Frontend Architecture
+
+- **Entrypoints**: `frontend/app/page.tsx` stays server-only and mounts the client `AgentConsole`. `frontend/app/layout.tsx` wires Tailwind base styles, Next fonts, and the React Query provider. `frontend/app/error.tsx` handles unhandled client errors with reset support.
+- **Feature modules**: `frontend/app/components/agent` contains focused pieces (`AgentConsole`, `AgentQuestionForm`, `AgentMessageCard`, empty/loading states). Domain logic such as rate limiting, caching, and mutation lifecycle is confined to the `useAgentConsole` hook under `frontend/app/lib/hooks`.
+- **Shared primitives**: Atomic UI elements live beneath `frontend/app/components/ui`; the data table (`frontend/app/components/data-table`) is lazy-loaded with `next/dynamic` to keep the main bundle small.
+- **API + validation**: `frontend/app/lib/api` centralises fetch logic with a single `request` helper, Zod schemas, and uniform error handling. DTOs are typed in `frontend/app/types` alongside a JSX namespace shim required by the React 19 typings.
+- **Configuration**: Environment guards (`frontend/app/config/env.ts`) enforce `NEXT_PUBLIC_API_BASE_URL` at build time, while `config/rate-limit.ts` hosts tunables for the client-side limiter.
+- **Tooling**: ESLint flat config (`frontend/eslint.config.mjs`), strict `tsconfig.json`, Vitest unit tests, a bundle analyzer (`pnpm analyze`), and a helper script (`frontend/scripts/ensure-route-types.cjs`) to create placeholder route types for tsc.

@@ -15,5 +15,7 @@
 5. **Performance**
    - Pool ClickHouse connections and measure async executor utilisation.
    - Cache prompt templates in memory to avoid disk reads on each request.
-6. **Frontend alignment**
-   - Update Next.js client to surface request ids, show /ready status, and handle degraded responses gracefully.
+6. **Frontend enhancements**
+   - Expand vitest coverage (hooks, API error states) and add Playwright smoke tests once auth flows arrive.
+   - Implement persistent query history (localStorage or backend endpoint) and expose the backend request id in the UI/error banner.
+   - Introduce theming + responsive refinements (dark mode, mobile table experience) and wire a toast system for API errors/success.
