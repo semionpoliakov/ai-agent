@@ -3,3 +3,5 @@ pytest-asyncio==1.2.0
 black==25.9.0
 ruff==0.14.1
 watchfiles==0.21.0
+hypothesis==6.112.3
+mypy==1.13.0

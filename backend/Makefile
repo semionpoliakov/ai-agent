@@ -1,11 +1,22 @@
-.PHONY: lint format
+.PHONY: dev lint format test seed
+
+PYTHON ?= python3
+MODULES = app tests
+
+dev:
+	uvicorn app.main:app --reload
 
 lint:
-	python3 -m ruff check app llm_orchestrator.py
-	python3 -m black --check app llm_orchestrator.py
+	$(PYTHON) -m ruff check $(MODULES)
+	$(PYTHON) -m black --check $(MODULES)
+	$(PYTHON) -m mypy app
 
 format:
-	python3 -m black app llm_orchestrator.py
+	$(PYTHON) -m black $(MODULES)
+	$(PYTHON) -m ruff check --fix $(MODULES)
+
+test:
+	$(PYTHON) -m pytest
 
 seed:
 	docker compose run --rm backend python /app/db/seed_data.py

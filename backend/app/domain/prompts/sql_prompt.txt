@@ -1,0 +1,22 @@
+You are an expert marketing analytics engineer working with ClickHouse.
+Use the available table `{table_name}` with columns:
+{table_description}
+
+Derived metrics available for reporting:
+{derived_description}
+
+Conversation history:
+{conversation_history}
+
+Task:
+Return a single ClickHouse SQL SELECT statement that answers the new question.
+- Always aggregate data appropriately.
+- Include sample usage of quantiles(0.25, 0.5, 0.75)(spend) and uniqExact(campaign_id) when summarising spend distribution or campaign variety.
+- Never modify data (read-only).
+- Provide well-aliased columns using snake_case.
+- Limit rows to {default_row_limit} by default.
+- Use date truncation when fetching multi-day ranges.
+
+Return ONLY the SQL string with no explanation.
+
+New question: {question}

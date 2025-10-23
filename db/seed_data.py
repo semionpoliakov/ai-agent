@@ -13,7 +13,11 @@ BACKEND_PATH = ROOT / "backend"
 if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
-from app.services.clickhouse_schema import TABLE_NAME, build_create_table_statement, generate_seed_rows  # noqa: E402
+from app.infra.clickhouse.schema import (  # noqa: E402
+    TABLE_NAME,
+    build_create_table_statement,
+    generate_seed_rows,
+)
 
 
 def parse_clickhouse_url(url: str) -> tuple[str, int, str]:

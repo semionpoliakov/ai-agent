@@ -1,140 +1,137 @@
 # Marketing Analytics AI Agent
 
-Full-stack AI assistant that translates natural-language marketing questions into ClickHouse SQL, executes queries, and returns narrative insights via a Next.js chat UI. Designed for Vercel (frontend) and Render/Railway (backend + ClickHouse + Redis) deployments.
+FastAPI-powered backend and Next.js frontend that converts marketing questions into ClickHouse SQL, executes the query, and returns a narrated insight. The backend now follows a layered architecture with explicit domain and infrastructure boundaries to support new LLM providers and future scale.
 
-## Architecture
+## Backend Overview
 
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind + shadcn-inspired UI + React Query client-side caching.
-- **Backend**: FastAPI (async) orchestrating Gemini Flash for SQL + summary, async ClickHouse driver, Redis cache, SlowAPI rate limiting, in-memory chat context.
-- **Data**: ClickHouse with synthetic ad performance data, seedable via Faker, backed by Redis caching. All containerised with Docker Compose.
+- **API layer**: `app/api` provides dependency wiring, error handling, health checks, and the `/api/v1/query` endpoint (rate limited with SlowAPI).
+- **Domain layer**: `app/domain` owns DTOs, prompt rendering, SQL sanitation, conversation memory, and the main `QueryOrchestrator` use case.
+- **Infrastructure layer**: `app/infra` contains adapters for ClickHouse, Redis caching, LLM clients, configuration, CORS, logging, and rate limits.
+- **Orchestration**: `app/app.py` builds the FastAPI instance, wires middleware, structured logging with request ids, and bootstraps ClickHouse seed data on startup.
 
 ## Getting Started
 
-1. **Prerequisites**: Docker, Docker Compose, Node.js 18+, Python 3.11+ (optional for local tooling).
-2. **Environment**:
+1. **Prerequisites**
+   - Docker + Docker Compose (for ClickHouse/Redis/back-end runtime)
+   - Node.js 18+ (for the frontend)
+   - Python 3.11 (for local tooling/tests)
+2. **Environment configuration**
    ```bash
    cp .env.example .env
-   # edit GEMINI_API_KEY and other secrets as needed
+   # populate CLICKHOUSE_*, REDIS_URL, and LLM_API_KEY secrets
    ```
-3. **Boot services**:
+3. **Run the stack**
    ```bash
    docker compose up --build
    ```
-   - FastAPI backend: `http://localhost:8000`
-   - ClickHouse native: `localhost:9000`, HTTP: `http://localhost:8123`
-   - Redis: `localhost:6379`
-4. **Seed data** (after containers are healthy):
+   Services become available at:
+   - Backend API: http://localhost:8000
+   - ClickHouse native: localhost:9000 (HTTP: http://localhost:8123)
+   - Redis: localhost:6379
+4. **Seed ClickHouse**
    ```bash
    docker compose run --rm backend python /app/db/seed_data.py
    ```
-5. **Run frontend locally**:
+5. **Frontend (optional)**
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
-   Configure `NEXT_PUBLIC_API_BASE_URL` (e.g. in `.env.local`) to point to the backend when deploying to Vercel.
+   Configure `NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local` to point at the backend.
 
-## Deployment Notes
+## Developer Tooling
 
-- **Frontend**: Push `frontend` directory to Vercel; set environment variable `NEXT_PUBLIC_API_BASE_URL` to your backend URL.
-- **Backend**: Deploy the `backend` service (with `backend/Dockerfile`) to Render or Railway, attach environment variables from `.env`, and provision ClickHouse + Redis services using managed offerings or the provided Compose setup.
+All backend commands are wrapped in `backend/Makefile`:
+
+```bash
+cd backend
+make dev       # uvicorn app.main:app --reload
+make lint      # ruff + black --check + mypy
+make format    # black + ruff --fix
+make test      # pytest -q
+make seed      # run ClickHouse seed script via Docker
+```
+
+Install dependencies locally with:
+
+```bash
+pip install -r backend/requirements.txt -r requirements-dev.txt
+```
 
 ## API Reference
 
-`POST /api/v1/query`
+- `POST /api/v1/query`
+  ```json
+  {
+    "question": "Show ROAS and CTR by source for the last 7 days",
+    "user_id": "user-123"
+  }
+  ```
+  Response:
+  ```json
+  {
+    "sql": "SELECT ...",
+    "data": [{"source": "facebook_ads", "spend": 10234.58}],
+    "summary": "Facebook Ads delivered higher ROAS ..."
+  }
+  ```
+- `GET /health` — lightweight liveness check.
+- `GET /ready` — readiness probe that verifies ClickHouse and Redis connectivity.
 
-```json
-{
-  "question": "Show ROAS and CTR by source for the last 7 days",
-  "user_id": "user-123"
-}
-```
-
-Response
-
-```json
-{
-  "sql": "SELECT ...",
-  "data": [
-    {
-      "source": "facebook_ads",
-      "spend": 10234.58,
-      "clicks": 3845,
-      "ctr": 0.12,
-      "roas": 2.45
-    },
-    {
-      "source": "google_ads",
-      "spend": 8421.77,
-      "clicks": 3104,
-      "ctr": 0.11,
-      "roas": 2.11
-    }
-  ],
-  "summary": "Facebook Ads delivered higher ROAS ..."
-}
-```
-
-`GET /health` returns ClickHouse/Redis health flags.
-
-## Project Structure
+## Repository Layout (Backend)
 
 ```
 backend/
   app/
-    api/          # FastAPI routers + rate limiting
-    core/         # Settings, cache, memory
-    models/       # Pydantic schemas
-    services/     # ClickHouse, LLM client, SQL validator
-  llm_orchestrator.py  # Multi-step agent pipeline
-  Dockerfile
-frontend/
-  app/           # Next.js App Router pages, error boundary
-  components/    # shadcn-style UI primitives, data table
-  lib/           # React Query provider, rate limiter, API client
-  package.json
-  tailwind.config.ts
-  next.config.js
-db/
-  init.sql       # Schema bootstrap
-  seed_data.py   # Faker-powered dataset (>1000 rows)
-tests/
-  test_sql_validator.py
+    api/
+      deps.py          # FastAPI dependency providers
+      errors.py        # HTTP exception mapping
+      health.py        # /health and /ready endpoints
+      routes/          # /query router + rate limiter
+    app.py             # FastAPI factory with middleware and bootstrap
+    domain/
+      models/          # Pydantic DTOs
+      prompts/         # Prompt templates stored on disk
+      services/        # Orchestrator, memory, prompt builder, sql tools
+    infra/
+      cache/           # Redis adapter + key builders
+      clickhouse/      # Async client, schema, bootstrap helpers
+      config.py        # Pydantic settings + env validation
+      cors.py, logging.py, rate_limit.py, llm/
+    main.py            # ASGI entrypoint for uvicorn
+  Makefile             # Developer commands
+  pyproject.toml       # black/ruff/mypy/pytest config
+  Dockerfile           # Backend container image
 ```
 
-## Example Question & Result
-
-- **Question**: “What are the spend quantiles and unique campaigns in the US over the last 90 days?”
-- **Generated SQL**: Uses `quantiles(0.25, 0.5, 0.75)(spend)` and `uniqExact(campaign_id)` over ClickHouse data.
-- **Summary**: Explains spend distribution, CTR/ROAS highlights, and campaign diversity.
-- **UI Output**: Summary paragraph plus table columns `source`, `spend`, `clicks`, `ctr`, `roas`, available for CSV download and SQL preview.
-
-### Sample Data Snapshot
-
-| date       | source       | spend  | clicks | ctr  | roas |
-| ---------- | ------------ | ------ | ------ | ---- | ---- |
-| 2024-02-12 | facebook_ads | 1245.3 | 532    | 0.12 | 2.18 |
-| 2024-02-12 | google_ads   | 980.6  | 421    | 0.11 | 1.94 |
+Tests live under `backend/tests/` with `unit/` (pure functions) and `integration/` smoke tests that override infrastructure with stubs.
 
 ## Testing
 
 ```bash
-pip install -r backend/requirements.txt -r requirements-dev.txt
-pytest
+cd backend
+make test
 ```
 
-`test_sql_validator.py` validates SQL filtering logic without external dependencies.
+Key coverage:
 
-## TODO / Future Enhancements
+- `backend/tests/unit/test_sql_validator.py` — safety checks for generated SQL.
+- `backend/tests/unit/test_sql_builder.py` — LLM output normalisation.
+- `backend/tests/unit/test_cache_keys.py` — deterministic cache hashing.
+- `backend/tests/integration/test_query_endpoint.py` — `/query` happy path with stubbed LLM/ClickHouse/Redis.
 
-- Observability stack (Prometheus, Grafana, OpenTelemetry).
-- Reinstate security headers (CSP, Referrer-Policy, Permissions-Policy).
-- CI/CD pipeline (GitHub Actions) for automated testing and deploys.
-- Horizontal scaling via Kubernetes + Helm charts.
-- Multi-model LLM orchestration for SQL + narrative ensembles.
-- Multi-tenant chat sessions with persistent storage.
-- ClickHouse materialized views for high-frequency aggregations.
-- Fine-tuning and persona-driven agent responses.
-- Edge runtime support with streaming answer delivery.
-- Frontend rate limiting backed by shared state and prompt-injection content scanning.
+## Operations Notes
+
+- Structured logging with request IDs is configured in `infra/logging.py`.
+- ClickHouse bootstrap and seeding are idempotent (`infra/clickhouse/bootstrap.py`).
+- Redis caching uses deterministic keys derived from question + normalised SQL.
+- `Settings` (`infra/config.py`) enforce required secrets per LLM provider and expose a sanitised dict for logging.
+
+## Frontend
+
+The Next.js application remains under `frontend/` and communicates with the backend via the `/api/v1/query` endpoint. See `frontend/README.md` (if present) or use the standard Next.js workflow (`npm install && npm run dev`).
+
+## Contributing & Future Work
+
+Planned enhancements are tracked in `FOLLOW-UPS.md`. Security posture (LLM output handling, SQL guardrails, secret management) is summarised in `SECURITY.md`. Contributions should maintain 100% typed code, follow `make lint`, and include appropriate tests.
