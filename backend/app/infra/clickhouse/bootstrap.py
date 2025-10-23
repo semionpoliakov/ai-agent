@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Sequence
 from typing import Any
 
 from .client import ClickHouseClient
-from .schema import TABLE_NAME, build_create_table_statement, generate_seed_rows
+from .schema import TABLE_NAME, build_create_table_statement
+from .seed_data import main as seed_clickhouse_cli, seed_clickhouse_with_client
 
 logger = logging.getLogger(__name__)
 
@@ -37,16 +39,11 @@ def _bootstrap_sync(client: ClickHouseClient) -> dict[str, Any]:
     summary["row_count"] = row_count
 
     if row_count == 0:
-        rows = generate_seed_rows(days=30)
-        if rows:
-            client.execute_sync(
-                f"INSERT INTO {table_identifier} VALUES",
-                rows,
-                types_check=True,
-            )
+        inserted = seed_clickhouse_data(client, days=30, sources=["google", "facebook"])
+        if inserted:
             summary["seeded"] = True
             count_result = client.execute_sync(count_query)
-            summary["row_count"] = int(count_result[0][0]) if count_result else len(rows)
+            summary["row_count"] = int(count_result[0][0]) if count_result else inserted
 
     logger.info(
         "clickhouse_bootstrap table=%s created=%s seeded=%s row_count=%s",
@@ -56,3 +53,21 @@ def _bootstrap_sync(client: ClickHouseClient) -> dict[str, Any]:
         summary["row_count"],
     )
     return summary
+
+
+def seed_clickhouse_data(
+    client: ClickHouseClient,
+    *,
+    days: int = 30,
+    sources: Sequence[str] | None = None,
+) -> int:
+    active_sources = list(sources or ["google", "facebook"])
+    return seed_clickhouse_with_client(
+        client,
+        days=days,
+        sources=tuple(active_sources),
+    )
+
+
+def bootstrap_seed_clickhouse() -> None:
+    seed_clickhouse_cli()

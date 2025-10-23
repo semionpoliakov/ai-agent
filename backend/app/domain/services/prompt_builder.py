@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterable
 
 from ...infra.clickhouse.schema import COLUMNS, DERIVED_METRICS, TABLE_NAME, ColumnDefinition
+from ...infra.serialization.json_utils import to_json
 from ..prompts import load_prompt
 
 DEFAULT_ROW_LIMIT = 100
@@ -38,5 +38,6 @@ def render_sql_prompt(question: str, history: list[str]) -> str:
 
 def render_summary_prompt(question: str, sql: str, rows: list[dict[str, object]]) -> str:
     template = load_prompt("summary_prompt")
-    dataset = json.dumps(rows, ensure_ascii=False)
+    truncated_rows = rows[: DEFAULT_ROW_LIMIT]
+    dataset = to_json(truncated_rows, ensure_ascii=False)
     return template.format(question=question, sql=sql, dataset=dataset)

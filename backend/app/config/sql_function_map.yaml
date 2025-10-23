@@ -1,0 +1,15 @@
+function_rules:
+  - function: CURRENT_DATE
+    template: "today()"
+  - function: CURRENTDATE
+    template: "today()"
+  - function: CURRENT_TIMESTAMP
+    template: "now()"
+  - function: NOW
+    template: "now()"
+  - function: DATE_TRUNC
+    when:
+      args0_value_lower: "month"
+    template: "toStartOfMonth({args1})"
+  - function: DATE_TRUNC
+    template: "toStartOfInterval({args1}, INTERVAL 1 {args0_value_upper})"

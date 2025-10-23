@@ -1,9 +1,10 @@
-"""SQL safety checks applied before executing LLM generated statements."""
+"""Validation helpers ensuring ClickHouse queries stay read-only and safe."""
 
 from __future__ import annotations
 
 import re
 from typing import Final
+
 
 FORBIDDEN_KEYWORDS: Final[tuple[str, ...]] = (
     "INSERT",
@@ -23,6 +24,11 @@ FORBIDDEN_KEYWORDS: Final[tuple[str, ...]] = (
     "CREATE",
 )
 
+FORBIDDEN_PATTERN: Final[re.Pattern[str]] = re.compile(
+    rf"\b({'|'.join(FORBIDDEN_KEYWORDS)})\b",
+    flags=re.IGNORECASE,
+)
+
 COMMENT_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"(--.*?$)|(/\*.*?\*/)", re.MULTILINE | re.DOTALL
 )
@@ -37,29 +43,31 @@ def _mask_string_literals(sql: str) -> str:
     return re.sub(STRING_PATTERN, "''", sql)
 
 
-def validate_sql_is_safe(sql: str) -> str:
-    """Ensure the SQL statement is a single SELECT without dangerous constructs."""
+def validate_clickhouse_sql(sql: str) -> str:
+    """Ensure the SQL statement is a single read-only SELECT."""
+    if not sql or not sql.strip():
+        raise ValueError("SQL query is empty")
+
     if COMMENT_PATTERN.search(sql):
         raise ValueError("SQL comments are not permitted")
 
     cleaned = _strip_comments(sql).strip()
-    if not cleaned:
-        raise ValueError("SQL query is empty")
-
     normalized = " ".join(cleaned.split())
-    if not normalized.upper().startswith("SELECT"):
+
+    normalized_upper = normalized.upper()
+
+    masked = _mask_string_literals(normalized_upper)
+
+    if FORBIDDEN_PATTERN.search(masked):
+        raise ValueError("Forbidden SQL operation detected")
+
+    if not normalized_upper.startswith("SELECT"):
         raise ValueError("Only SELECT statements are permitted")
 
     if normalized.endswith(";"):
         raise ValueError("Trailing semicolons are not permitted")
 
-    masked = _mask_string_literals(normalized.upper())
-
     if ";" in masked[:-1]:
         raise ValueError("Multiple statements are not allowed")
-
-    for keyword in FORBIDDEN_KEYWORDS:
-        if re.search(rf"\b{keyword}\b", masked, flags=re.IGNORECASE):
-            raise ValueError(f"Forbidden keyword detected: {keyword}")
 
     return normalized

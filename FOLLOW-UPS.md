@@ -7,7 +7,7 @@
    - Introduce Prometheus metrics (latency histograms, cache hit rate, ClickHouse query durations).
    - Wire structured logs into a central sink (ELK/OTEL) and add correlation ids for LLM + ClickHouse calls.
 3. **Testing depth**
-   - Add property-based fuzzing for `sql_validator` covering quoted identifiers and nested functions.
+   - Add property-based fuzzing for `normalize_sql_for_clickhouse` / `validate_clickhouse_sql` covering quoted identifiers and nested functions.
    - Provide contract tests for Redis cache behaviour under concurrent access.
 4. **Security enhancements**
    - Enforce API authentication (JWT or signed headers) before /query.

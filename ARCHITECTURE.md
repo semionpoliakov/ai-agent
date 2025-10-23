@@ -36,7 +36,8 @@ The backend is organised around a clean architecture split into API, Domain, and
 
 - `app/app.py`: FastAPI factory configuring middleware, request ID logging, CORS, exception handlers, and startup bootstrap.
 - `app/domain/services/sql_builder.py`: Strips think tags/code fences, collapses whitespace, and prepares SQL for validation.
-- `app/domain/services/sql_validator.py`: Guards against multi-statements, comments, and mutation keywords.
+- `app/infra/sql/normalizer.py`: Loads function rewrite rules, strips unsupported syntax, and relies on `sqlglot` to emit ClickHouse-safe SQL.
+- `app/infra/sql/validator.py`: Ensures only read-only `SELECT` statements without comments, multi-statements, or forbidden keywords reach ClickHouse.
 - `app/infra/llm`: Protocol + Groq implementation. A factory selects providers via environment variables.
 - `app/infra/clickhouse`: Async client wrapping `clickhouse-driver` plus schema bootstrap + deterministic seed data.
 - `app/infra/cache`: Redis asyncio adapter with JSON helpers and key builders.

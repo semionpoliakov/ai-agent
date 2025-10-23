@@ -30,7 +30,7 @@ FastAPI-powered backend and Next.js frontend that converts marketing questions i
    - Redis: localhost:6379
 4. **Seed ClickHouse**
    ```bash
-   docker compose run --rm backend python /app/db/seed_data.py
+   docker compose run --rm backend python -m app.infra.clickhouse.seed_data
    ```
 5. **Frontend (optional)**
    ```bash
@@ -84,7 +84,7 @@ Refer to [frontend/README.md](frontend/README.md) for scripts, environment confi
   ```json
   {
     "sql": "SELECT ...",
-    "data": [{"source": "facebook_ads", "spend": 10234.58}],
+    "data": [{"source": "facebook", "spend": 10234.58}],
     "summary": "Facebook Ads delivered higher ROAS ..."
   }
   ```
@@ -128,7 +128,7 @@ make test
 
 Key coverage:
 
-- `backend/tests/unit/test_sql_validator.py` — safety checks for generated SQL.
+- `backend/tests/unit/test_sql_normalizer.py` — safety checks for SQL normalization and validation.
 - `backend/tests/unit/test_sql_builder.py` — LLM output normalisation.
 - `backend/tests/unit/test_cache_keys.py` — deterministic cache hashing.
 - `backend/tests/integration/test_query_endpoint.py` — `/query` happy path with stubbed LLM/ClickHouse/Redis.

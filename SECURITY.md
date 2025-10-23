@@ -3,7 +3,7 @@
 ## LLM Output Handling
 
 - Raw completions are normalised via `sql_builder.clean_sql_output()` which strips `<think>` tags, code fences, `SQL:` labels, and trailing semicolons before validation.
-- `sql_validator.validate_sql_is_safe()` rejects any non-`SELECT` statement, multiple statements, comments, or dangerous keywords (`INSERT`, `DROP`, `ALTER`, etc.).
+- `normalize_sql_for_clickhouse()` (`app/infra/sql/normalizer.py`) converts generic SQL to ClickHouse syntax and applies `validate_clickhouse_sql()` to reject DDL/DML, multi-statements, comments, and unsafe keywords.
 - Summaries are also stripped of `<think>` tags to avoid leaking chain-of-thought content back to end users.
 
 ## Data Access Controls

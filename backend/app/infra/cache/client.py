@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any, cast
 
 from redis.asyncio import Redis
 
 from ..config import Settings, get_settings
+from ..serialization.json_utils import to_json
 
 _REDIS_INSTANCE: Redis | None = None
 _LOCK = asyncio.Lock()
@@ -45,7 +45,7 @@ class RedisCache:
 
     async def write(self, key: str, value: dict[str, Any], ttl_seconds: int | None = None) -> None:
         redis = await get_redis(self._settings)
-        payload = json.dumps(value)
+        payload = to_json(value)
         expiry = ttl_seconds or self._settings.cache_ttl_seconds
         await redis.set(key, payload, ex=expiry)
 
