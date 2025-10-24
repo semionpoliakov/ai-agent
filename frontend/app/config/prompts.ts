@@ -1,5 +1,5 @@
 export const EXAMPLE_PROMPTS = [
   "Show me statistics for all time from all sources. Add source table",
-  "Show me the last 2 months of statistics for Google source.",
-  "Show me the last month of statistics for Facebook source.",
+  "Show me statistics for the last 2 months where the traffic source is google.",
+  "Show me statistics for clicks for the last 2 months where the traffic source is facebook.",
 ] as const;
