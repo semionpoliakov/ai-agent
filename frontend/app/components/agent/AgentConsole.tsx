@@ -32,6 +32,8 @@ export function AgentConsole() {
 
   return (
     <section className="space-y-4">
+      <AgentEmptyState />
+
       <AgentQuestionForm
         question={question}
         onQuestionChange={handleQuestionChange}
@@ -52,8 +54,6 @@ export function AgentConsole() {
       ) : null}
 
       {isSubmitting ? <AgentLoadingState /> : null}
-
-      {messages.length === 0 && !isSubmitting ? <AgentEmptyState /> : null}
 
       {messages.map((entry) => (
         <AgentMessageCard key={entry.id} entry={entry} />

@@ -19,4 +19,4 @@ test:
 	$(PYTHON) -m pytest
 
 seed:
-	docker compose run --rm backend python -m app.infra.clickhouse.seed_data
+	docker compose run --rm backend $(PYTHON) -m app.infra.clickhouse.seed_data

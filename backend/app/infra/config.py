@@ -51,7 +51,6 @@ class Settings(BaseSettings):
     llm_api_key: SecretStr | None = Field(default=None, alias="LLM_API_KEY")
     groq_api_key: SecretStr | None = Field(default=None, alias="GROQ_API_KEY")
 
-    max_history_messages: PositiveInt = Field(default=3, alias="MAX_HISTORY_MESSAGES")
     cache_ttl_seconds: PositiveInt = Field(default=3600, alias="CACHE_TTL_SECONDS")
     rate_limit_per_minute: PositiveInt = Field(default=30, alias="RATE_LIMIT_PER_MINUTE")
     cors_allowed_origin: str | None = Field(default=None, alias="CORS_ALLOWED_ORIGIN")
@@ -80,7 +79,6 @@ class Settings(BaseSettings):
             "llm_provider": self.llm_provider,
             "llm_model": self.llm_model,
             "llm_temperature": self.llm_temperature,
-            "max_history_messages": self.max_history_messages,
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "rate_limit_per_minute": self.rate_limit_per_minute,
             "cors_allowed_origin": self.cors_allowed_origin or "disabled",

@@ -51,14 +51,22 @@ services:
       LLM_MODEL: ${LLM_MODEL:-qwen/qwen3-32b}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
-      MAX_HISTORY_MESSAGES: ${MAX_HISTORY_MESSAGES:-3}
       CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-3600}
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
     volumes:
       - ./backend/app:/app/app
     ports:
       - "8000:8000"
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
 
 volumes:
   clickhouse-data:
