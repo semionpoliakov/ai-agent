@@ -14,6 +14,7 @@ FastAPI backend and Next.js frontend that convert marketing questions into Click
 
 ```bash
 cp .env.example .env
+cd frontend cp .env.example .env
 ```
 
 Populate `.env` with:

@@ -4,7 +4,6 @@ const nextConfig = {
   typedRoutes: true,
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
-  experimental: { optimizeCss: true },
 };
 
 export default nextConfig;
