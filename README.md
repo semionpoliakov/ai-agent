@@ -62,7 +62,7 @@ cd frontend && pnpm dev
 
 **Request:**
 
-```json
+```txt
 Show me statistics for all time from all sources. Add source and months to table.
 ```
 
@@ -155,7 +155,7 @@ Show me statistics for all time from all sources. Add source and months to table
 
 **Request:**
 
-```json
+```txt
 Show me statistics for the last 2 months where the traffic source is google.
 ```
 
@@ -185,7 +185,7 @@ Show me statistics for the last 2 months where the traffic source is google.
 
 **Request:**
 
-```json
+```txt
 Show me statistics for clicks for the last 2 months where the traffic source is facebook.
 ```
 
