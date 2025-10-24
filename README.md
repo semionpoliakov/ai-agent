@@ -4,11 +4,7 @@ FastAPI backend and Next.js frontend that convert marketing questions into Click
 
 ## Live demo
 
-[demo](www.google.com)
-
-## Screenshots
-
-[demo](www.google.com)
+[https://ai-agent-three-rose.vercel.app/](https://ai-agent-three-rose.vercel.app/)
 
 ## Setup
 
