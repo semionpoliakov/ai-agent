@@ -1,12 +1,12 @@
+import { ReactQueryProvider } from "@/components/providers/reactQueryProvider";
 import type { Metadata } from "next";
-import "./globals.css";
 import { Inter } from "next/font/google";
-import { ReactQueryProvider } from "@/components/providers/react-query-provider";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Marketing Analytics Agent",
+  title: "AI Agent",
   description: "Chat with an AI agent to explore performance marketing metrics.",
 };
 

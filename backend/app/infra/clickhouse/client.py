@@ -82,13 +82,8 @@ class ClickHouseClient:
         result = self._sync_client.execute(sql, with_column_types=True)
         return cast(tuple[list[Any], list[Any]], result)
 
-
-_CLICKHOUSE_CLIENT: ClickHouseClient | None = None
-
-
-def get_clickhouse_client() -> ClickHouseClient:
-    """Return a singleton ClickHouse client instance."""
-    global _CLICKHOUSE_CLIENT
-    if _CLICKHOUSE_CLIENT is None:
-        _CLICKHOUSE_CLIENT = ClickHouseClient()
-    return _CLICKHOUSE_CLIENT
+    async def close(self) -> None:
+        """Disconnect the underlying synchronous driver."""
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self._sync_client.disconnect)
+        logger.info("clickhouse_client_disconnected host=%s database=%s", self._connection.host, self._connection.database)

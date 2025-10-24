@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from app.api import deps
 from app.app import create_app
 from app.domain.models import QueryRequest
 from app.domain.services.orchestrator import QueryOrchestrator
 from app.infra.cache.client import RedisCache
-from app.infra.config import Settings, get_settings
+from app.infra.config import get_settings
 from app.infra.llm.base import LLMClientProtocol
 from fastapi.testclient import TestClient
 
@@ -25,26 +24,37 @@ class StubLLM(LLMClientProtocol):
 
 
 class StubClickHouse:
+    def __init__(self) -> None:
+        self.database = "default"
+
     async def query(self, sql: str) -> list[dict[str, Any]]:
         return [{"source": "facebook", "total_spend": 123.45}]
 
     async def execute_scalar(self, sql: str) -> int:
         return 1
 
+    def execute_sync(self, sql: str, *args: Any, **kwargs: Any) -> list[tuple[int]]:
+        return [(1,)]
 
-class InMemoryCache(RedisCache):
-    def __init__(self, settings: Settings) -> None:  # type: ignore[override]
-        super().__init__(settings)
-        self._store: dict[str, Any] = {}
+    async def close(self) -> None:
+        return None
 
-    async def read(self, key: str) -> dict[str, Any] | None:
-        value = self._store.get(key)
-        if value is None:
-            return None
-        return value
 
-    async def write(self, key: str, value: dict[str, Any], ttl_seconds: int | None = None) -> None:
+class StubRedis:
+    def __init__(self) -> None:
+        self._store: dict[str, str] = {}
+
+    async def get(self, key: str) -> str | None:
+        return self._store.get(key)
+
+    async def set(self, key: str, value: str, ex: int | None = None) -> None:
         self._store[key] = value
+
+    async def ping(self) -> bool:
+        return True
+
+    async def close(self) -> None:
+        return None
 
 
 @pytest.fixture(autouse=True)
@@ -67,7 +77,8 @@ def test_query_endpoint_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = get_settings()
     stub_llm = StubLLM()
     stub_clickhouse = StubClickHouse()
-    stub_cache = InMemoryCache(settings)
+    stub_redis = StubRedis()
+    stub_cache = RedisCache(stub_redis, settings)
 
     orchestrator = QueryOrchestrator(
         settings=settings,
@@ -76,18 +87,18 @@ def test_query_endpoint_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
         cache=stub_cache,
     )
 
-    monkeypatch.setattr("app.app.get_clickhouse_client", lambda: stub_clickhouse)
+    monkeypatch.setattr("app.app.ClickHouseClient", lambda *_args, **_kwargs: stub_clickhouse)
 
     async def _bootstrap(_: object) -> dict[str, object]:
         return {"table": "stub", "created": False, "seeded": False, "row_count": 1}
 
     monkeypatch.setattr("app.app.bootstrap_clickhouse", _bootstrap)
+    monkeypatch.setattr("app.app.Redis.from_url", lambda *args, **kwargs: stub_redis)
+    monkeypatch.setattr("app.app.RedisCache", lambda redis, settings: stub_cache)
+    monkeypatch.setattr("app.app.get_llm_client", lambda _settings: stub_llm)
+    monkeypatch.setattr("app.app.QueryOrchestrator", lambda **kwargs: orchestrator)
 
     app = create_app(settings)
-
-    app.dependency_overrides[deps.get_orchestrator_dep] = lambda: orchestrator
-    app.dependency_overrides[deps.get_clickhouse_dep] = lambda: stub_clickhouse  # type: ignore[return-value]
-    app.dependency_overrides[deps.get_cache_dep] = lambda: stub_cache
 
     with TestClient(app) as client:
         response = client.post(

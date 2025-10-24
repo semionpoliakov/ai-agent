@@ -1,6 +1,6 @@
 import { env } from "@/config/env";
-import { ApiError, buildApiError } from "./errors";
 import type { ZodSchema } from "zod";
+import { ApiError, buildApiError } from "./errors";
 
 interface RequestOptions<TSchema> {
   path: string;
@@ -30,10 +30,9 @@ export async function request<TResponse>({
       method,
       body: isJsonBody ? JSON.stringify(body) : undefined,
       headers: {
-        ...(isJsonBody ? { "Content-Type": "application/json" } : null),
+        ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
         ...headers,
       },
-      credentials: "omit",
       signal,
       cache,
     });
@@ -43,6 +42,10 @@ export async function request<TResponse>({
     }
     const reason = error instanceof Error ? error.message : "unknown error";
     throw new ApiError(`Unable to reach API (${reason})`, { status: 0 });
+  }
+
+  if (response.status === 204) {
+    return {} as TResponse;
   }
 
   const responseText = await response.text();

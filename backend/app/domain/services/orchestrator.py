@@ -6,13 +6,13 @@ import logging
 import time
 from typing import Any
 
-from ...infra.cache.client import RedisCache, get_cache
+from ...infra.cache.client import RedisCache
 from ...infra.cache.keys import fingerprint_key, question_key
-from ...infra.clickhouse.client import ClickHouseClient, get_clickhouse_client
+from ...infra.clickhouse.client import ClickHouseClient
 from ...infra.config import Settings, get_settings
 from ...infra.sql.normalizer import normalize_sql_for_clickhouse
 from ...infra.llm.base import LLMClientProtocol
-from ...infra.llm.factory import ProviderNotConfiguredError, get_llm_client
+from ...infra.llm.factory import get_llm_client
 from .prompt_builder import render_sql_prompt
 from .sql_builder import clean_sql_output
 from .summarizer import Summarizer
@@ -28,13 +28,13 @@ class QueryOrchestrator:
         *,
         settings: Settings | None = None,
         llm_client: LLMClientProtocol | None = None,
-        clickhouse: ClickHouseClient | None = None,
-        cache: RedisCache | None = None,
+        clickhouse: ClickHouseClient,
+        cache: RedisCache,
     ) -> None:
         self._settings = settings or get_settings()
         self._llm = llm_client or get_llm_client(self._settings)
-        self._clickhouse = clickhouse or get_clickhouse_client()
-        self._cache = cache or get_cache()
+        self._clickhouse = clickhouse
+        self._cache = cache
         self._summarizer = Summarizer(self._llm)
 
     async def run(self, *, question: str, user_id: str | None) -> dict[str, Any]:
@@ -80,17 +80,3 @@ class QueryOrchestrator:
         fp_key = fingerprint_key(question, sql)
         await self._cache.write(fp_key, payload)
         await self._cache.write(question_key(question), {"fingerprint": fp_key})
-
-
-_ORCHESTRATOR: QueryOrchestrator | None = None
-
-
-def get_orchestrator() -> QueryOrchestrator:
-    global _ORCHESTRATOR
-    if _ORCHESTRATOR is None:
-        try:
-            _ORCHESTRATOR = QueryOrchestrator()
-        except ProviderNotConfiguredError as exc:
-            logger.error("failed_initialising_orchestrator error=%s", exc)
-            raise
-    return _ORCHESTRATOR

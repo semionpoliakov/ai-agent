@@ -1,5 +1,6 @@
 import * as React from "react";
-import { clsx } from "clsx";
+
+import { cn } from "@/lib/utils";
 
 type ButtonVariant = "default" | "outline" | "ghost" | "destructive";
 
@@ -22,7 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       type={type}
-      className={clsx(
+      className={cn(
         "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 disabled:pointer-events-none",
         variantStyles[variant],
         className,

@@ -1,20 +1,23 @@
 "use client";
 
-import { memo, useMemo } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { AgentDataCell, AgentDataRow } from "@/types/agent";
+import { memo } from "react";
 
-export interface DataTableProps {
+interface DataTableProps {
   rows: AgentDataRow[];
 }
 
 function formatCell(value: AgentDataCell): string {
-  if (Array.isArray(value)) {
-    return value.map((item) => formatCell(item ?? null)).join(", ");
-  }
-  if (value === null || value === undefined) {
-    return "—";
-  }
+  if (Array.isArray(value)) return value.map((item) => formatCell(item ?? null)).join(", ");
+  if (value == null) return "—";
   if (typeof value === "number") {
     const fraction = Number.isInteger(value) ? 0 : 2;
     return value.toLocaleString(undefined, {
@@ -22,18 +25,26 @@ function formatCell(value: AgentDataCell): string {
       maximumFractionDigits: fraction,
     });
   }
-  return value;
+  return String(value);
 }
 
 function InnerDataTable({ rows }: DataTableProps) {
-  const columns = useMemo(() => {
-    if (!rows.length) return [] as string[];
-    return Object.keys(rows[0]);
-  }, [rows]);
+  if (!rows.length)
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableBody>
+            <TableRow>
+              <TableCell className="text-center text-sm text-muted-foreground">
+                No rows returned
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
 
-  if (!rows.length) {
-    return <p className="text-sm text-muted-foreground">No rows returned for this query.</p>;
-  }
+  const columns = Object.keys(rows[0]);
 
   return (
     <div className="overflow-x-auto">
@@ -46,8 +57,8 @@ function InnerDataTable({ rows }: DataTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={index}>
+          {rows.map((row, i) => (
+            <TableRow key={i}>
               {columns.map((column) => (
                 <TableCell key={column}>{formatCell(row[column] ?? null)}</TableCell>
               ))}
@@ -58,8 +69,6 @@ function InnerDataTable({ rows }: DataTableProps) {
     </div>
   );
 }
-
-InnerDataTable.displayName = "DataTable";
 
 export const DataTable = memo(InnerDataTable);
 DataTable.displayName = "DataTable";

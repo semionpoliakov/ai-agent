@@ -2,11 +2,11 @@
 
 import { useCallback } from "react";
 
-import { AgentEmptyState } from "./agent-empty-state";
-import { AgentLoadingState } from "./agent-loading-state";
-import { AgentMessageCard } from "./agent-message-card";
-import { AgentQuestionForm } from "./agent-question-form";
-import { useAgentConsole } from "@/lib/hooks/use-agent-console";
+import { useAgentConsole } from "@/lib/hooks/useAgentConsole";
+import { AgentEmptyState } from "./AgentEmptyState";
+import { AgentLoadingState } from "./AgentLoadingState";
+import { AgentMessageCard } from "./AgentMessageCard";
+import { AgentQuestionForm } from "./AgentQuestionForm";
 
 export function AgentConsole() {
   const {
@@ -17,7 +17,6 @@ export function AgentConsole() {
     error,
     resetError,
     isSubmitting,
-    remainingRequests,
     handleSubmit,
   } = useAgentConsole();
 
@@ -39,13 +38,13 @@ export function AgentConsole() {
         onSubmit={handleSubmit}
         isQuestionValid={isQuestionValid}
         isSubmitting={isSubmitting}
-        remainingRequests={remainingRequests}
       />
 
       {error ? (
         <p
           role="alert"
           aria-live="polite"
+          aria-atomic="true"
           className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive"
         >
           {error}

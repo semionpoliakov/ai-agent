@@ -1,4 +1,4 @@
-import type { AgentQueryPayload, AgentQueryResponse, AgentQueryRequestDTO } from "@/types/agent";
+import type { AgentQueryPayload, AgentQueryRequestDTO, AgentQueryResponse } from "@/types/agent";
 import { request } from "./client";
 import { agentQueryRequestSchema, agentQueryResponseSchema } from "./schemas";
 
@@ -17,5 +17,6 @@ export async function submitAgentQuery(
     body: requestBody,
     schema: agentQueryResponseSchema,
     signal,
+    cache: "no-store",
   });
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Send } from "lucide-react";
+import type { FormEvent } from "react";
 
 interface AgentQuestionFormProps {
   question: string;
@@ -11,7 +11,6 @@ interface AgentQuestionFormProps {
   onSubmit: (value: string) => void;
   isQuestionValid: boolean;
   isSubmitting: boolean;
-  remainingRequests: number;
 }
 
 export function AgentQuestionForm({
@@ -20,7 +19,6 @@ export function AgentQuestionForm({
   onSubmit,
   isQuestionValid,
   isSubmitting,
-  remainingRequests,
 }: AgentQuestionFormProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,9 +46,6 @@ export function AgentQuestionForm({
         />
       </div>
       <div className="flex items-center justify-between gap-3">
-        <span id="question-hint" className="text-xs text-muted-foreground">
-          Cached answers appear instantly. Remaining client-side requests: {remainingRequests}
-        </span>
         <Button
           type="submit"
           disabled={!isQuestionValid || isSubmitting}

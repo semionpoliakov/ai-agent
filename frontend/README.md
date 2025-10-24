@@ -27,8 +27,8 @@ public/
 
 ## Environment variables
 
-| Variable | Required | Description |
-| --- | --- | --- |
+| Variable                   | Required           | Description                                                                                                           |
+| -------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_BASE_URL` | ✅ (at build time) | Base URL for the FastAPI backend, e.g. `http://localhost:8000`. Required for static generation and production builds. |
 
 When the variable is omitted in non-production runs the UI falls back to `http://localhost:8000` and logs a console warning. Production builds **must** provide the variable or the build will fail fast.

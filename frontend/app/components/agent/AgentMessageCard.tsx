@@ -1,25 +1,19 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { Eye } from "lucide-react";
 import { memo } from "react";
-import { Download, Eye } from "lucide-react";
 
+import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { downloadCsv } from "@/lib/utils/download-csv";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { AgentHistoryEntry } from "@/types/agent";
-
-const DataTable = dynamic(async () => (await import("@/components/data-table")).DataTable, {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-2">
-      <Skeleton className="h-6 w-32" />
-      <Skeleton className="h-40 w-full" />
-    </div>
-  ),
-});
 
 interface AgentMessageCardProps {
   entry: AgentHistoryEntry;
@@ -37,8 +31,10 @@ function AgentMessageCardComponent({ entry }: AgentMessageCardProps) {
         <CardTitle className="text-base">{entry.question}</CardTitle>
         <p className="text-sm text-muted-foreground">Answered {answeredAt}</p>
       </CardHeader>
+
       <CardContent>
         <p className="text-sm leading-relaxed text-foreground">{entry.response.summary}</p>
+
         <div className="flex flex-wrap gap-3 pt-2">
           <Dialog>
             <DialogTrigger asChild>
@@ -56,24 +52,19 @@ function AgentMessageCardComponent({ entry }: AgentMessageCardProps) {
               </pre>
             </DialogContent>
           </Dialog>
-          <Button
-            variant="outline"
-            className="inline-flex items-center gap-2"
-            onClick={() => downloadCsv(entry.response.data, entry.question)}
-            disabled={!entry.response.data.length}
-          >
-            <Download size={16} /> Download CSV
-          </Button>
         </div>
+
         <div className="pt-4">
-          <DataTable rows={entry.response.data} />
+          {entry.response.data.length ? (
+            <DataTable rows={entry.response.data} />
+          ) : (
+            <p className="text-sm text-muted-foreground">No data returned for this query.</p>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-const AgentMessageCardMemo = memo(AgentMessageCardComponent);
-AgentMessageCardMemo.displayName = "AgentMessageCard";
-
-export const AgentMessageCard = AgentMessageCardMemo;
+export const AgentMessageCard = memo(AgentMessageCardComponent);
+AgentMessageCard.displayName = "AgentMessageCard";

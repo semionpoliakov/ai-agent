@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..api.deps import get_cache_dep, get_clickhouse_dep
 from ..domain.models import HealthResponse
-from ..infra.cache.client import RedisCache, get_redis
+from ..infra.cache.client import RedisCache
 from ..infra.clickhouse.client import ClickHouseClient
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ async def health_check(
         logger.exception("ClickHouse health check failed")
 
     try:
-        redis = await get_redis()
+        redis = cache.redis
         await redis.ping()
         redis_ok = True
     except Exception:  # noqa: BLE001

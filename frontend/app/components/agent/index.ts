@@ -1,2 +1,2 @@
-export { AgentConsole } from './agent-console';
-export { AgentHero } from './agent-hero';
+export { AgentConsole } from "./AgentConsole";
+export { AgentHero } from "./AgentHero";

@@ -6,19 +6,9 @@ from ..config import Settings, get_settings
 from .base import LLMClientProtocol
 from .groq_client import GroqClient
 
-_CLIENTS: dict[str, LLMClientProtocol] = {}
-
 
 class ProviderNotConfiguredError(RuntimeError):
     """Raised when an unsupported or unconfigured LLM provider is requested."""
-
-
-def _get_or_create_groq(settings: Settings) -> LLMClientProtocol:
-    client = _CLIENTS.get("groq")
-    if client is None:
-        client = GroqClient(settings)
-        _CLIENTS["groq"] = client
-    return client
 
 
 def get_llm_client(settings: Settings | None = None) -> LLMClientProtocol:
@@ -27,7 +17,7 @@ def get_llm_client(settings: Settings | None = None) -> LLMClientProtocol:
     provider = (settings.llm_provider or "groq").lower()
 
     if provider == "groq":
-        return _get_or_create_groq(settings)
+        return GroqClient(settings)
     if provider == "openai":
         raise ProviderNotConfiguredError("OpenAI provider is not yet configured")
     if provider == "vertex":

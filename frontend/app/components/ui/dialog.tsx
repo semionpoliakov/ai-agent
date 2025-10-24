@@ -1,6 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { clsx } from "clsx";
 import { X } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
@@ -11,7 +12,7 @@ export function DialogContent({ className, ...props }: DialogPrimitive.DialogCon
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
       <DialogPrimitive.Content
-        className={clsx(
+        className={cn(
           "fixed inset-0 m-auto flex h-fit max-h-[80vh] w-full max-w-2xl flex-col gap-4 rounded-xl bg-card p-6 shadow-2xl",
           className,
         )}

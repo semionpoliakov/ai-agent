@@ -1,10 +1,11 @@
 import * as React from "react";
-import { clsx } from "clsx";
+
+import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx(
+      className={cn(
         "rounded-xl border border-muted-foreground/20 bg-card p-6 shadow-sm",
         className,
       )}
@@ -14,13 +15,13 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={clsx("mb-4 flex flex-col gap-1", className)} {...props} />;
+  return <div className={cn("mb-4 flex flex-col gap-1", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={clsx("text-lg font-semibold leading-tight", className)} {...props} />;
+  return <h3 className={cn("text-lg font-semibold leading-tight", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={clsx("flex flex-col gap-4", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-4", className)} {...props} />;
 }

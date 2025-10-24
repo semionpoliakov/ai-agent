@@ -1,5 +1,5 @@
 export const EXAMPLE_PROMPTS = [
-  'Show spend, clicks, CTR and ROAS by ad source for the last 7 days.',
-  'What are the spend quantiles and unique campaign count in the US for the past quarter?',
-  'Highlight campaigns with the highest ROAS week over week.',
+  "Show me statistics for all time from all sources. Add source table",
+  "Show me the last 2 months of statistics for Google source.",
+  "Show me the last month of statistics for Facebook source.",
 ] as const;

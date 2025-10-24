@@ -1,4 +1,8 @@
 .next
 out
+dist
+.turbo
 node_modules
 coverage
+.env*
+pnpm-lock.yaml
