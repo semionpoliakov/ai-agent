@@ -31,8 +31,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: marketing-backend
     depends_on:
       clickhouse:
